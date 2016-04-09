@@ -217,43 +217,74 @@ struct sp {
 } subpath;
 
 
-void dfs(vertex** vtov, int current, int parent, int* min_cost, int** min_p) {
+int* p;
+int* visited;
+int* min_path;
+int* breakpoint;
+int min_cost;
+
+void dfs(vertex** vtov, int current, int parent) {
     p[current] = parent;
 
     if (current == end) {
         if (cost < min_cost) {
+            for (i = 0; i < vertex_num + 1; i++) min_path[i] = -1;
+
             *min_cost = cost;
-            // update path
+            // update path in a reverse order
+            min_path[i] = p[end];
+            for (i = 1; i < vertex_num + 1; i++) {
+                int temp = p[min_path[i-1]];
+                if (temp == start) {
+                    break;
+                } else {
+                    min_path[i] = p[min_path[i-1]];
+                }
+            }
         }
     }
 
-    int next = 0;
-    while (vtov[current][next] == INF) next++;
+    int next = breakpoint[current];
+    while (vtov[current][next] == INF || visited[next]) next++;
 
-    if (vtov[current][next] == INF) {
+    if (vtov[current][next] == INF || visited[next]) {
         if (current == start) return;   // search complete
-        vtov[parent][current] = INF;    // disable current node
         cost -= vtov[parent][current];
-        dfs(vtov, parent, p[parent], min_cost, min_p);     // go back
+        breakpoint[current] = 0;
+        vtov[parent][current] = INF;    // disable current node
+        visited[current] = 0;
+        dfs(vtov, parent, p[parent]);     // go back
     } else {
-        cost += vtov[current][next];
-        dfs(vtov, next, current, min_cost, min_p);
+	    if (cost + vtov[current][next] >= *min_cost) {      // cut-off
+            breakpoint[current] = next;
+	        vtov[current][next] = INF;
+            dfs(vtov, current, parent);
+	    } else {                           // go deeper
+            breakpoint[current] = next;
+            cost += vtov[current][next];
+            visited[next] = 1;
+            dfs(vtov, next, current);
+        }
     }
 
-    // go into first visitable node, if none, disable current_node and dfs(parent_node)
-    // update the current cost and record the parent node
-
-    // if current node is end node, update min_cost and min_path
-        // else dfs(current_node)
-    
 }
 
 void search(vertex** vtov) {
-    int** min_p;
-    int min_cost = 10000000;
+    int arr_size = sizeof(int) * (vertex_num + 1);
+    min_cost = 10000000;
+    min_path = (int*)malloc(arr_size);
+    visited = (int*)malloc(arr_size);
+    breakpoint = (int*)malloc(arr_size);
+    
+    int i;
+    for (i = 0; i < vertex_num+1; i++) {
+        visited[i] = 0;
+        breakpoint[i] = 0;
+    }
 
     // init at start point
-    dfs(vtov, start_num, -1, &min_cost, min_p);
+    visited[start_num] = 1;
+    dfs(vtov, start_num, -1);
     
 }
 
