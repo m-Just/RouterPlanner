@@ -9,7 +9,7 @@
 //你要完成的功能总入口
 int num[4];//4 numbers
 
-int start,end;//start and end points
+int start, end;//start and end points
 
 int must_pass[610];//must past points
 
@@ -118,7 +118,7 @@ void scan(char* line){
     }
     num[3]=atoi(temp);
 
-    printf("%d %d %d %d\n",num[0],num[1],num[2],num[3]);
+    //printf("%d %d %d %d\n",num[0],num[1],num[2],num[3]);
 }
 
 //struct vertex
@@ -128,7 +128,7 @@ struct vertex{
 };
 
 //matrix
-vertex vertex_to_vertex[610][610];
+vertex vtov[610][610];
 
 //whether a point is dead or not
 int dead[610]={0};
@@ -136,7 +136,7 @@ int dead[610]={0};
 //validating the point
 int valid_vertex(int vertex_id){
     for(int i=0;i<610;i++){
-        if(all_exist[i]&&vertex_to_vertex[vertex_id][i].weight!=INF)
+        if(all_exist[i]&&vtov[vertex_id][i].weight!=INF)
             return 1;
     }
     return 0;
@@ -158,7 +158,7 @@ void validating(){
             return;
         for(int j=0;j<610;j++){
             if(all_exist[j])
-                vertex_to_vertex[temp][j].weight=INF;
+                vtov[temp][j].weight=INF;
         }
     }
 }
@@ -168,25 +168,27 @@ void validating(){
 void initialize(char *topo[5000], int edge_num, char *demand){
     for (int i=0;i<610;i++){
         for(int j=0;j<610;j++){
-            vertex_to_vertex[i][j].weight=INF;
-            //:vertex_to_vertex[i][j]=0;
+            vtov[i][j].weight=INF;
+            //:vtov[i][j]=0;
         }
     }
 
     for(int i=0;i<edge_num;i++){
         scan(topo[i]);
-        if(num[3]<vertex_to_vertex[num[1]][num[2]].weight){
-            vertex_to_vertex[num[1]][num[2]].weight=num[3];
-            vertex_to_vertex[num[1]][num[2]].edge_id=num[0];
+        if(num[3]<vtov[num[1]][num[2]].weight){
+            vtov[num[1]][num[2]].weight=num[3];
+            vtov[num[1]][num[2]].edge_id=num[0];
         }
     }
 
     scan_demand(demand);
 
+    /*
     int i=0;
     while(must_pass[i]!=-1)
         printf("%d ",must_pass[i++]);
     printf("\n\n");
+    */
 
     validating();
 
@@ -194,20 +196,21 @@ void initialize(char *topo[5000], int edge_num, char *demand){
         if(dead[i]==0)
             valid_num++;
     
+    /*
     for(int i=0;i<610;i++){
         if(dead[i]==0&&all_exist[i]){
             printf("%d     ",dead[i]);
             for(int j=0;j<610;j++){
-                if(all_exist[j]&&vertex_to_vertex[i][j].weight!=INF)
-                    printf("%d/%d ",vertex_to_vertex[i][j].edge_id,vertex_to_vertex[i][j].weight);
+                if(all_exist[j]&&vtov[i][j].weight!=INF)
+                    printf("%d/%d ",vtov[i][j].edge_id,vtov[i][j].weight);
             }
             printf("\n\n");
         }
-
     }
+    */
 }
 
-struct sp {
+typedef struct sp {
     int id;
     int sNode;
     int eNode;
@@ -219,19 +222,50 @@ int* p;
 int* visited;
 int* min_path;
 int* breakpoint;
+int cost;
 int min_cost;
 
-void dfs(vertex** vtov, int current, int parent) {
+int all_visited() {
+    int i = 0;
+    int mp_num = 0;
+    while (must_pass[i] != -1) {
+        mp_num++;
+        i++;
+    }
+
+    int current = end;
+    while (p[current] != start) {
+        i = 0;
+        while (must_pass[i] != -1) {
+            if (p[current] == must_pass[i]) {
+                mp_num--;
+                break;
+            }
+            i++;
+        }
+        current = p[current];
+    }
+    printf("mp_num = %d\n", mp_num);
+
+    if (mp_num == 0) return 1;
+    else return 0;
+}
+
+void dfs(int current, int parent) {
+
+    printf("Now at node %d\n", current);
+
     p[current] = parent;
 
-    if (current == end) {
+    int i;
+    if (current == end && all_visited()) {
         if (cost < min_cost) {
-            for (i = 0; i < vertex_num + 1; i++) min_path[i] = -1;
+            for (i = 0; i < all_num + 1; i++) min_path[i] = -1;
 
-            *min_cost = cost;
+            min_cost = cost;
             // update path in a reverse order
-            min_path[i] = p[end];
-            for (i = 1; i < vertex_num + 1; i++) {
+            min_path[0] = p[end];
+            for (i = 1; i < all_num + 1; i++) {
                 int temp = p[min_path[i-1]];
                 if (temp == start) {
                     break;
@@ -242,50 +276,79 @@ void dfs(vertex** vtov, int current, int parent) {
         }
     }
 
+    //printf("Breakpoint of point %d = %d\n", current, breakpoint[current]);
     int next = breakpoint[current];
-    while (vtov[current][next] == INF || visited[next]) next++;
+    while (next <= 610 && (vtov[current][next].weight == INF || visited[next])) next++;
 
-    if (vtov[current][next] == INF || visited[next]) {
-        if (current == start) return;   // search complete
-        cost -= vtov[parent][current];
+    if (next > 609) {
+        printf("Cannot expand anymore...\n");
+        if (current == start) {
+            printf("Search complete!\n");
+            return;   // search complete
+        }
+        cost -= vtov[parent][current].weight;
         breakpoint[current] = 0;
-        vtov[parent][current] = INF;    // disable current node
         visited[current] = 0;
-        dfs(vtov, parent, p[parent]);     // go back
+        dfs(parent, p[parent]);     // go back
     } else {
-	    if (cost + vtov[current][next] >= *min_cost) {      // cut-off
-            breakpoint[current] = next;
-	        vtov[current][next] = INF;
-            dfs(vtov, current, parent);
+	    if (cost + vtov[current][next].weight >= min_cost) {      // cut-off
+            //printf("Cost = %d\n", cost + vtov[current][next].weight);
+            //printf("Min-cost = %d\n", min_cost);
+            printf("Cut off\n");
+            breakpoint[current] = next+1;
+	        vtov[current][next].weight = INF;
+            dfs(current, parent);
 	    } else {                           // go deeper
-            breakpoint[current] = next;
-            cost += vtov[current][next];
+            printf("Expand...\n");
+            breakpoint[current] = next+1;
+            cost += vtov[current][next].weight;
             visited[next] = 1;
-            dfs(vtov, next, current);
+            dfs(next, current);
         }
     }
 
+
 }
 
-void search(vertex** vtov) {
-    int arr_size = sizeof(int) * (vertex_num + 1);
+void force_search() {
+    cost = 0;
     min_cost = 10000000;
+
+    int arr_size = sizeof(int) * (all_num + 1);
+    printf("Array size = %d\n", all_num + 1);
+    p = (int*)malloc(arr_size);
     min_path = (int*)malloc(arr_size);
     visited = (int*)malloc(arr_size);
     breakpoint = (int*)malloc(arr_size);
     
     int i;
-    for (i = 0; i < vertex_num+1; i++) {
+    for (i = 0; i < all_num+1; i++) {
         visited[i] = 0;
         breakpoint[i] = 0;
     }
 
     // init at start point
-    visited[start_num] = 1;
-    dfs(vtov, start_num, -1);
+    visited[start] = 1;
+    dfs(start, -1);
     
 }
 
+void print_path() {
+    if (min_path[0] == -1) {
+        printf("No path found!\n");
+        return;
+    } else {
+        printf("The path found: ");
+    }
+    
+    int i;
+    for (i = all_num; i >= 0; i--) {
+        if (min_path[i] != -1) {
+            printf("%d ", min_path[i]);
+        }
+    }
+    printf("\n");
+}
 
 //你要完成的功能总入口
 void search_route(char *topo[5000], int edge_num, char *demand)
@@ -297,7 +360,6 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     subpath* sp = (subpath*)malloc(sizeof(subpath) * edge_num);
     
     int i;
-    char *ptr;
     for (i = 0; i < edge_num; i++) {
         scan(topo[i]);
         sp[i].id = num[0];
@@ -307,13 +369,13 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     }
 
     
-    if (vertex_num <= 15) {
-        dfs();
+    if (all_num <= 15) {
+        force_search();
     } else {
 
     }
 
-
+    print_path();
 
 /*
     unsigned short result[] = {2, 6, 3};//示例中的一个解
@@ -336,20 +398,20 @@ int hash(int num) {
 
 void Held_Karp(vertex** vtov) {
     int i, k;
-    int hash_size = 1 << vertex_num;
-    int** cost = (int**)malloc(sizeof(int*)*vertex_num);
-    for (i = 0; i < vertex_num; i++) {
+    int hash_size = 1 << all_num;
+    int** cost = (int**)malloc(sizeof(int*)*all_num);
+    for (i = 0; i < all_num; i++) {
         cost[i] = (int*)malloc(sizeof(int)*(hash_size)); //??
     }
     
-    for (k = 0; k < vertex_num; k++) {
-        if (k != start_num) {
-            cost[k][start_num] = vtov[start_num][k];
+    for (k = 0; k < all_num; k++) {
+        if (k != start) {
+            cost[k][start] = vtov[start][k];
         }
     }
 
     int s;
-    for (k = 3; k < vertex_num; k++) {
+    for (k = 3; k < all_num; k++) {
         for (h = 0; h < hash_size; h++) {
             int temp, cnt = 0;
             for (temp = h; temp > 0; temp >> 1) {
