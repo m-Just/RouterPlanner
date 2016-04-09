@@ -2,7 +2,6 @@
 #include "route.h"
 #include "lib_record.h"
 #include <stdio.h>
-<<<<<<< HEAD
 #include <stdlib.h>
 
 //你要完成的功能总入口
@@ -206,15 +205,6 @@ void initialize(char *topo[5000], int edge_num, char *demand){
     }
 }
 
-
-void search_route(char *topo[5000], int edge_num, char *demand)
-{
-    //unsigned short result[] = {2, 6, 3};//示例中的一个解
-    initialize(topo,edge_num,demand);
-    /*for (int i = 0; i < 3; i++)
-        record_result(result[i])*/;
-=======
-
 struct sp {
     int id;
     int sNode;
@@ -226,6 +216,8 @@ struct sp {
 //你要完成的功能总入口
 void search_route(char *topo[5000], int edge_num, char *demand)
 {
+    initialize(topo,edge_num,demand);
+    
     subpath* sp = (subpath*)malloc(sizeof(subpath) * edge_num);
     
     int i;
@@ -247,5 +239,4 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     for (int i = 0; i < 3; i++)
         record_result(result[i]);
 */
->>>>>>> cdb232672911507d14b0e37a772b5a4671aaf8d2
 }
