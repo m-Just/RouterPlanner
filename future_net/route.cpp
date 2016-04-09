@@ -4,9 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-<<<<<<< HEAD
 #define EASY_BOUND 15
-=======
+
 //你要完成的功能总入口
 int num[4];//4 numbers
 
@@ -207,7 +206,6 @@ void initialize(char *topo[5000], int edge_num, char *demand){
 
     }
 }
->>>>>>> fd222c531d23badb64a9e0c36fa7511f7463d843
 
 struct sp {
     int id;
@@ -292,14 +290,10 @@ void search(vertex** vtov) {
 //你要完成的功能总入口
 void search_route(char *topo[5000], int edge_num, char *demand)
 {
-<<<<<<< HEAD
     //unsigned short result[];
 
-
-=======
     initialize(topo,edge_num,demand);
     
->>>>>>> fd222c531d23badb64a9e0c36fa7511f7463d843
     subpath* sp = (subpath*)malloc(sizeof(subpath) * edge_num);
     
     int i;
